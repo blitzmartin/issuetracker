@@ -6,14 +6,15 @@ module.exports = function (app) {
   app.route('/api/issues/:project')
 
     .get(async (req, res) => {
-      const project = req.params.project;
-      let filter = { project };
-      if (Object.keys(req.query).length > 0) {
-        filter = { ...filter, ...req.query };
-      }
+      const projectName = req.params.project;
+      //let filter = { project };
+      /*   if (Object.keys(req.query).length > 0) {
+          filter = { ...filter, ...req.query };
+        } */
 
       try {
-        const issues = await Issue.find(filter).select({ project: 0, __v: 0 });
+        const project = await Project.findOne({ name: projectName })
+        const issues = await Issue.find({ projectId: project._id }).select({ project: 0, __v: 0 });
         res.json(issues);
       } catch (error) {
         console.error("Error retrieving issues:\n", error);
