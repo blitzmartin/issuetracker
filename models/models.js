@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const issueSchema = new mongoose.Schema({
+     projectId: { type: String, required: true },
      issue_title: { type: String, required: true },
      issue_text: { type: String, required: true },
      created_by: { type: String, required: true },
@@ -11,4 +12,11 @@ const issueSchema = new mongoose.Schema({
      open: { type: Boolean, default: true },
 });
 
-module.exports = mongoose.model('Issue', issueSchema);
+const projectSchema = new mongoose.Schema({
+     name: { type: String, required: true }
+})
+
+const Issue = mongoose.model('Issue', issueSchema);
+const Project = mongoose.model('Project', projectSchema);
+
+module.exports = { Issue, Project };

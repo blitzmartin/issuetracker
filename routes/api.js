@@ -1,23 +1,42 @@
 'use strict';
+const { Issue, Project } = require('../models/models');
 
 module.exports = function (app) {
 
   app.route('/api/issues/:project')
 
-    .get(function (req, res) {
-      let project = req.params.project;
-
-    })
-
-    .post(async (req, res) => {
+    .get(async (req, res) => {
       const project = req.params.project;
-      const { issue_title, issue_text, created_by, assigned_to, status_text } = req.body;
-      if (!issue_title || !issue_text || !created_by) {
-        return res.status(400).json({ error: "Required fields missing" });
+      let filter = { project };
+      if (Object.keys(req.query).length > 0) {
+        filter = { ...filter, ...req.query };
       }
 
       try {
+        const issues = await Issue.find(filter).select({ project: 0, __v: 0 });
+        res.json(issues);
+      } catch (error) {
+        console.error("Error retrieving issues:\n", error);
+        res.status(500).json({ error: "Failed to retrieve issues" });
+      }
+    })
+
+    .post(async (req, res) => {
+      let projectName = req.params.project
+      const { issue_title, issue_text, created_by, assigned_to, status_text } = req.body;
+
+      if (!issue_title || !issue_text || !created_by) {
+        return res.json({ error: "required field(s) missing" });
+      }
+
+      try {
+        let project = await Project.findOne({ name: projectName })
+        if (!project) {
+          project = new Project({ name: projectName })
+          project = await project.save()
+        }
         const issue = new Issue({
+          projectId: project._id,
           issue_title,
           issue_text,
           created_by,
@@ -33,7 +52,6 @@ module.exports = function (app) {
       } catch (err) {
         console.log("There was an error while creating issue: ", err)
       }
-      res.status(201).json(issue);
     })
 
     .put(function (req, res) {
