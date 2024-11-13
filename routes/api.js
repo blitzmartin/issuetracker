@@ -1,5 +1,7 @@
 'use strict';
 const { Issue, Project } = require('../models/models');
+const QueryParser = require('mongoose-query-parser').MongooseQueryParser;
+const queryParser = new QueryParser()
 
 module.exports = function (app) {
 
@@ -7,14 +9,18 @@ module.exports = function (app) {
 
     .get(async (req, res) => {
       const projectName = req.params.project;
-      //let filter = { project };
-      /*   if (Object.keys(req.query).length > 0) {
-          filter = { ...filter, ...req.query };
-        } */
 
       try {
         const project = await Project.findOne({ name: projectName })
-        const issues = await Issue.find({ projectId: project._id }).select({ project: 0, __v: 0 });
+
+        if (!project) {
+          return res.status(404).json({ error: "Project not found" });
+        }
+        const filter = { projectId: project._id };
+        const parsedQuery = queryParser.parse(req.query);
+        Object.assign(filter, parsedQuery.filter)
+
+        const issues = await Issue.find(filter).select({ project: 0, __v: 0 });
         res.json(issues);
       } catch (error) {
         console.error("Error retrieving issues:\n", error);
