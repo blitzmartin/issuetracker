@@ -2,6 +2,7 @@
 const { Issue, Project } = require('../models/models');
 const QueryParser = require('mongoose-query-parser').MongooseQueryParser;
 const queryParser = new QueryParser()
+const mongoose = require('mongoose');
 
 module.exports = function (app) {
 
@@ -55,7 +56,7 @@ module.exports = function (app) {
         })
 
         const savedIssue = await issue.save();
-        res.status(201).json(savedIssue);
+        res.json(savedIssue);
       } catch (err) {
         console.log("There was an error while creating issue: ", err)
       }
@@ -63,11 +64,16 @@ module.exports = function (app) {
 
 
     .put(async (req, res) => {
+
       const { _id, issue_title, issue_text, created_by, assigned_to, status_text, open } = req.body;
+
       try {
         if (!_id) {
           return res.json({ error: 'missing _id' });
         }
+
+        const foundIssue = await Issue.findById(_id)
+        console.log("Before update: ", foundIssue)
 
         const update = {};
         if (issue_title) update.issue_title = issue_title;
@@ -86,7 +92,7 @@ module.exports = function (app) {
         if (!updatedIssue) {
           return res.json({ error: 'could not update', '_id': _id });
         }
-
+        console.log("After update: ", updatedIssue)
         res.json({ result: 'successfully updated', '_id': _id });
       } catch (err) {
         res.json({ error: 'could not update', '_id': _id });
@@ -99,11 +105,14 @@ module.exports = function (app) {
         if (!_id) {
           return res.json({ error: 'missing _id' })
         }
+        if (!mongoose.Types.ObjectId.isValid(_id)) {
+          return res.json({ error: 'could not delete', '_id': _id });
+        }
         const deletedIssue = await Issue.findByIdAndDelete(_id)
         if (!deletedIssue) {
           return res.json({ error: 'could not delete', '_id': _id });
         }
-        res.json({ result: 'successfully deleted', '_id': _id })
+        res.json({ result: 'successfully deleted', '_id': _id });
       } catch (err) {
         res.json({ error: 'could not delete', '_id': _id })
         console.error("Error while deleting issue: ", err);
