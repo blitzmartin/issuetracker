@@ -63,19 +63,18 @@ module.exports = function (app) {
 
     .put(async (req, res) => {
       const { _id, issue_title, issue_text, created_by, assigned_to, status_text, open } = req.body;
+
       try {
         if (!_id) {
           return res.json({ error: 'missing _id' });
         }
+
         const issue = await Issue.findById(_id);
         if (!issue) {
           return res.json({ error: 'could not update', '_id': _id });
         }
 
-        // Prepare the update object
-        const update = {
-          updated_on: new Date()
-        };
+        const update = {};
         if (issue_title) update.issue_title = issue_title;
         if (issue_text) update.issue_text = issue_text;
         if (created_by) update.created_by = created_by;
@@ -83,20 +82,21 @@ module.exports = function (app) {
         if (status_text) update.status_text = status_text;
         if (open !== undefined) update.open = open;
 
-        // Check if there's anything to update
         if (Object.keys(update).length === 0) {
           return res.json({ error: 'no update field(s) sent', '_id': _id });
         }
 
+        update.updated_on = new Date();
+
         const updatedIssue = await Issue.findByIdAndUpdate(_id, { $set: update }, { new: true });
         res.json({ result: 'successfully updated', '_id': _id });
       } catch (err) {
-        console.log("There was an error while creating issue: ", err)
+        console.error("There was an error while updating issue: ", err);
+        res.json({ error: 'could not update', '_id': _id });
       }
-
     })
 
-    .delete(function (req, res) {
+    .delete(async (req, res) => {
       let project = req.params.project;
 
     });
