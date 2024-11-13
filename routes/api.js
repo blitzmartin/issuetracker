@@ -89,6 +89,9 @@ module.exports = function (app) {
         update.updated_on = new Date();
 
         const updatedIssue = await Issue.findByIdAndUpdate(_id, { $set: update }, { new: true });
+        if (!updatedIssue) {
+          return res.json({ error: 'could not update', '_id': _id });
+        }
         res.json({ result: 'successfully updated', '_id': _id });
       } catch (err) {
         console.error("There was an error while updating issue: ", err);
@@ -97,8 +100,20 @@ module.exports = function (app) {
     })
 
     .delete(async (req, res) => {
-      let project = req.params.project;
-
+      const { _id } = req.body;
+      try {
+        if (!_id) {
+          return res.json({ error: 'missing _id' })
+        }
+        const deletedIssue = await Issue.findByIdAndDelete(_id)
+        if (!deletedIssue) {
+          return res.json({ error: 'could not delete', '_id': _id });
+        }
+        res.json({ result: 'successfully deleted', '_id': _id })
+      } catch (err) {
+        res.json({ error: 'could not delete', '_id': _id })
+        console.error("Error while deleting issue: ", err);
+      }
     });
 
 };
