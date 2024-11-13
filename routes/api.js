@@ -61,17 +61,12 @@ module.exports = function (app) {
       }
     })
 
+
     .put(async (req, res) => {
       const { _id, issue_title, issue_text, created_by, assigned_to, status_text, open } = req.body;
-
       try {
         if (!_id) {
           return res.json({ error: 'missing _id' });
-        }
-
-        const issue = await Issue.findById(_id);
-        if (!issue) {
-          return res.json({ error: 'could not update', '_id': _id });
         }
 
         const update = {};
@@ -86,15 +81,14 @@ module.exports = function (app) {
           return res.json({ error: 'no update field(s) sent', '_id': _id });
         }
 
-        update.updated_on = new Date();
+        const updatedIssue = await Issue.findByIdAndUpdate(_id, { $set: update, updated_on: new Date() }, { new: true });
 
-        const updatedIssue = await Issue.findByIdAndUpdate(_id, { $set: update }, { new: true });
         if (!updatedIssue) {
           return res.json({ error: 'could not update', '_id': _id });
         }
+
         res.json({ result: 'successfully updated', '_id': _id });
       } catch (err) {
-        console.error("There was an error while updating issue: ", err);
         res.json({ error: 'could not update', '_id': _id });
       }
     })
